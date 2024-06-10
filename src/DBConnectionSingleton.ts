@@ -10,8 +10,6 @@ let ConnectionInstance: sql.ConnectionPool | undefined;
 
 const OrangeChalk = chalk.hex("#FFA500")
 
-console.log(process.env.DB_SERVER)
-
 export async function DBConnectionInstance(): Promise<sql.ConnectionPool> {
 
   if (ConnectionInstance){

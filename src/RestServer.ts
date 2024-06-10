@@ -1,8 +1,16 @@
 import express from "express"
 import cors from "cors"
-import chalk from "chalk";
-import { DBConnectionInstance } from "./DBConnectionSingleton.js";
-import { RESTDeleteUser } from "./RESTDeleteUser.js";
+
+import { RESTDeleteUser } from "./RESTUser/RESTDeleteUser.js";
+import { RESTGetUsers } from "./RESTUser/RESTGetUsers.js";
+import { RESTPostUser } from "./RESTUser/RESTPostUser.js";
+import { RESTGetUserByID } from "./RESTUser/RESTGetUserByID.js";
+import { RESTGetTables } from "./RESTTable/RESTGetTables.js";
+import { RESTGetNominations } from "./RESTNomination/RESTGetNominations.js";
+import { RESTGetVotes } from "./RESTVote/RESTGetVotes.js";
+import { RESTGetTableFields } from "./RESTTable/RESTGetTableFields.js";
+import { RESTGetNominationsByID } from "./RESTNomination/RESTGetNominationsByID.js";
+import { RESTPostNomination } from "./RESTNomination/RESTPostNomination.js";
 
 const Server = express();
 
@@ -16,254 +24,41 @@ Server.use(cors({
 
 Server.use(express.json());
 
-Server.get("/Users", async (req, res) => {
+////////////////////////////////////////////////////////////////////////////////
+//                           User REST
+////////////////////////////////////////////////////////////////////////////////
 
-  console.log(chalk.cyan("Getting Users:"))
+Server.get("/users", RESTGetUsers)
 
-  console.log(chalk.green("  Connecting to DB"))
-  const DBConInst = await DBConnectionInstance();
-  console.log(chalk.green("  Executing Query"))
+Server.get('/user/:userId', RESTGetUserByID) 
 
-  const DBRes = await DBConInst.query(`
-    SELECT 
-      * 
-    FROM tblUsers
-  `)
+Server.post("/user", RESTPostUser )
 
-  console.log(chalk.green("  Sending Response"))
+Server.delete('/user/:userId', RESTDeleteUser)
 
-  res.send(DBRes.recordset)
-  console.log(chalk.cyan("Done Getting Users"))
+////////////////////////////////////////////////////////////////////////////////
+//                           Table REST
+////////////////////////////////////////////////////////////////////////////////
 
-})
+Server.get('/tables', RESTGetTables)
 
-Server.get('/User/:UserId', async (req, res) => {
-  console.log(chalk.cyan(`Getting User: ${req.params.UserId}`))
+Server.get('/tableFields/:table', RESTGetTableFields)
 
-  console.log(chalk.green("  Connecting to DB"))
+////////////////////////////////////////////////////////////////////////////////
+//                           Nomination REST
+////////////////////////////////////////////////////////////////////////////////
 
-  const DBConInst = await DBConnectionInstance();
+Server.get('/nominations', RESTGetNominations)
 
-  console.log(chalk.green("  Executing Query"))
+Server.get('/nomination/:nominationId', RESTGetNominationsByID )
 
-  const DBRes = await DBConInst.query(`
-    SELECT 
-      * 
-    FROM tblUsers
-    WHERE userId = ${req.params.UserId}
-  `)
+Server.post('/nomination', RESTPostNomination )
 
-  console.log(chalk.green("  Sending Response"))
+////////////////////////////////////////////////////////////////////////////////
+//                           Vote REST
+////////////////////////////////////////////////////////////////////////////////
 
-  res.send(DBRes.recordset)
-  console.log(chalk.cyan(`Done Getting User: ${req.params.UserId}`))
-}) 
-
-Server.get('/tables', async (req,res) => {
-
-  console.log(chalk.cyan(`Getting Tables`))
-
-  console.log(chalk.green("  Connecting to DB"))
-
-  const DBConInst = await DBConnectionInstance();
-
-  console.log(chalk.green("  Executing Query"))
-
-  const DBRes = await DBConInst.query(`
-    SELECT 
-      * 
-    FROM INFORMATION_SCHEMA.TABLES 
-    WHERE TABLE_TYPE='BASE TABLE'
-  `)
-
-  console.log(chalk.green("  Sending Response"))
-
-  res.send(DBRes.recordset)
-  console.log(chalk.cyan("Done Getting Tables"))
-})
-
-Server.get('/nominations', async (req,res) => {
-
-  console.log(chalk.cyan(`Getting Nominations`))
-
-  console.log(chalk.green("  Connecting to DB"))
-
-  const DBConInst = await DBConnectionInstance();
-
-  console.log(chalk.green("  Executing Query"))
-
-  const DBRes = await DBConInst.query(`
-    SELECT 
-      * 
-    FROM tblNominations
-  `)
-
-  console.log(chalk.green("  Sending Response"))
-
-  res.send(DBRes.recordset)
-
-  console.log(chalk.cyan("Done Getting Nominations"))
-})
-
-Server.get('/nomination/:nominationId', async (req,res) => {
-
-  console.log(chalk.cyan(`Getting Nomination: ${req.params.nominationId}`))
-
-  console.log(chalk.green("  Connecting to DB"))
-
-  const DBConInst = await DBConnectionInstance();
-
-  console.log(chalk.green("  Executing Query"))
-
-  const DBRes = await DBConInst.query(`
-    SELECT 
-      * 
-    FROM tblNominations
-    WHERE nominationId = ${req.params.nominationId}
-  `)
-
-  console.log(chalk.green("  Sending Response"))
-
-  res.send(DBRes.recordset)
-
-  console.log(chalk.cyan(`Done Getting Nomination: ${req.params.nominationId}`))
-})
-
-Server.get('/votes', async (req,res) => {
-
-  console.log(chalk.cyan(`Getting Votes`))
-
-  console.log(chalk.green("  Connecting to DB"))
-
-  const DBConInst = await DBConnectionInstance();
-
-  console.log(chalk.green("  Executing Query"))
-
-  const DBRes = await DBConInst.query(`
-    SELECT 
-      * 
-    FROM tblVotes
-  `)
-
-  console.log(chalk.green("  Sending Response"))
-
-  res.send(DBRes.recordset)
-
-  console.log(chalk.cyan(`Done Getting Votes`))
-})
-
-Server.get('/tableFields/:table', async (req,res) => {
-
-  console.log(chalk.cyan(`Getting Fields: ${req.params.table}`))
-
-  console.log(chalk.green("  Connecting to DB"))
-
-  const DBConInst = await DBConnectionInstance();
-
-  console.log(chalk.green("  Executing Query"))
-
-  const DBRes = await DBConInst.query(`
-    SELECT 
-      *
-    FROM 
-      INFORMATION_SCHEMA.COLUMNS
-    WHERE 
-      TABLE_NAME = '${req.params.table}'
-  `)
-
-  console.log(chalk.green("  Sending Response"))
-
-  res.send(DBRes.recordset)
-
-  console.log(chalk.cyan(`Done Getting Fields: ${req.params.table}`))
-})
-
-Server.post("/User",async (req: TypedRequest<RestServer.UserInsertData>, res) => {
-  
-  console.log(chalk.cyan(`Inserting User`))
-
-  const UserInfo = req.body;
-
-  if (!UserInfo){
-
-    res.status(400);
-    res.send(JSON.stringify({
-      message:"No Body was found on POST request for /User"
-    }))
-
-    return;
-  }
-
-  if (
-    !UserInfo.firstName  ||
-    !(typeof UserInfo.firstName === "string")
-  ) {
-
-    res.status(400);
-    res.send(JSON.stringify({
-      message:"firstName is Missing on Body on POST request for /User"
-    }))
-
-    console.log(chalk.red("Bad Request missing: firstName on POST /User"))
-
-    return;
-  }
-  
-  if (
-    !UserInfo.lastName ||
-    !(typeof UserInfo.lastName === "string")
-  ) {
-
-    res.status(400);
-    res.send(JSON.stringify({
-      message:"lastName is Missing on Body on POST request for /User"
-    }))
-
-    console.log(chalk.red("Bad Request missing: lastName on POST /User"))
-
-    return;
-  }
-
-  console.log(chalk.green("  Connecting to DB"))
-
-  const DBConInst = await DBConnectionInstance();
-
-  console.log(chalk.green("  Executing Query"))
-
-  let Query = `
-    INSERT INTO tblUsers (firstname,lastname)
-    VALUES ('${UserInfo.firstName}','${UserInfo.lastName}')
-  `
-
-  console.log(Query)
-
-  await DBConInst.query(Query)
-
-  console.log(chalk.green("  Sending Response"))
-
-  Query = `
-    SELECT
-      *
-    FROM tblUsers
-    WHERE 
-      (firstname = '${UserInfo.firstName}' )
-    AND 
-      (lastname = '${UserInfo.lastName}')
-  `
-
-  console.log(Query)
-
-  const DBRes = await DBConInst.query(Query)
-
-  res.send(DBRes.recordset)
-
-  console.log(chalk.cyan(`Done Inserting User`))
-} )
-
-Server.delete('/User/:userId', (req,res) => {
-
-  RESTDeleteUser(req,res);
-})
+Server.get('/votes', RESTGetVotes)
 
 Server.listen(ServerPort, ()=>{
 
