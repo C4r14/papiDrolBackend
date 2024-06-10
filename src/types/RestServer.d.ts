@@ -8,4 +8,11 @@ declare namespace RestServer {
   type UserData = UserInsertData & {
     userId: number
   }
+
+  type NominationInsertData = {
+    userId: number,
+    month: string,
+    nominationType: 'Papi' | 'Drol',
+    description: string
+  }
 }
